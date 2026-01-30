@@ -6,3 +6,8 @@ By the time I finish this project, I will have learned a lot about HTTP not only
 
 so what is the project purpose? 
 hmm basically our server is going read form a connection byte by byte in real time.
+
+First Step:
+
+1- create a message.txt file and then put a random text on it.
+2- now we want our program to to read the messages.txt 8 bytes at a time and we are going to print the data back to stdout in 8 bytes chuncks.
