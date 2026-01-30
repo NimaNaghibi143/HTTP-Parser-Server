@@ -11,3 +11,12 @@ First Step:
 
 1- create a message.txt file and then put a random text on it.
 2- now we want our program to to read the messages.txt 8 bytes at a time and we are going to print the data back to stdout in 8 bytes chuncks.
+
+- Reading 8 bytes at a time is a good start, but 8 byte chuncks are not how people tend to communicate. 
+
+ok let's update our code to continue to read 8 bytes at a time. but now let's format the output line by line.
+
+1- Create a string varaible to hold the contents of the current line of the file, it needs to persist between reads (loop iteration)
+
+2- After reading 8 bytes, split the data on newlines to create a slice of stirngs - we are going to call these split sections "parts". There will typically only be one or two "parts" because we are only reading 8 bytes at a time.
+
