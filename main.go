@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
+	"net"
 )
 
 // ReadCloser is just a interface with read and close functions
@@ -47,13 +47,23 @@ func getLinesChannel(f io.ReadCloser) <-chan string {
 }
 
 func main() {
-	f, err := os.Open("messages.txt")
+	listener, err := net.Listen("tcp", ":42069")
 	if err != nil {
 		log.Fatal("error", "error", err)
 	}
 
-	lines := getLinesChannel(f)
-	for line := range lines {
-		fmt.Printf("read: %s\n", line)
+	fmt.Println("Server is listening on port 42069...")
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Fatal("error", "error", err)
+		}
+
+		go func(c net.Conn) {
+			for line := range getLinesChannel(c) {
+				fmt.Printf("read: %s\n", line)
+			}
+		}(conn)
 	}
 }

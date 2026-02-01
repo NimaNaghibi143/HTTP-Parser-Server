@@ -1,0 +1,6 @@
+Server is listening on port 42069...
+read: The initial phase of any significant engineering endeavor, especially one destined for the
+read: open-source community, must be rooted in rigorous design and a clear ideological
+read: framework. For a twenty-four-year-old engineer with an obsession for operating system
+read: concepts and a academic background in threat intelligence, the design document is more
+read: than a plan; it is an articulation of technical values.

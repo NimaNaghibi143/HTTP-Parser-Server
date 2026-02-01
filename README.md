@@ -1,40 +1,97 @@
-# HTTP-Parser-Server
-Introduction:
-I’m about to start a fun project where I build an HTTP parser and server from scratch using the Go programming language. I won’t be using the net/http package, because I want to build everything myself. However, I will use the TCP library, since HTTP is built on top of TCP.
+# HTTP Parser & Server
 
-By the time I finish this project, I will have learned a lot about HTTP not only from a theoretical perspective, but also from a practical and technical standpoint.
+## Project Overview
 
-so what is the project purpose? 
-hmm basically our server is going read form a connection byte by byte in real time.
+This project implements a rudimentary HTTP parser and server built from scratch using the Go programming language. The primary objective is to gain a deep technical understanding of the HTTP protocol by bypassing the standard `net/http` package.
 
-First Step:
+Instead of high-level abstractions, this implementation handles the protocol manually over raw TCP sockets using Go's `net` package. The core logic revolves around reading connections byte-by-byte in real-time to reconstruct and parse messages.
 
-1- create a message.txt file and then put a random text on it.
-2- now we want our program to to read the messages.txt 8 bytes at a time and we are going to print the data back to stdout in 8 bytes chuncks.
+## Technical Architecture 
 
-- Reading 8 bytes at a time is a good start, but 8 byte chuncks are not how people tend to communicate. 
+* **Language:** Go
+* **Networking:** `net` (TCP/IP)
+* **Concurrency Model:** Goroutines and Channels for non-blocking I/O processing.
+* **Data Flow:** Stream-based processing (reading small chunks to construct lines).
 
-Second step:
+---
 
-ok let's update our code to continue to read 8 bytes at a time. but now let's format the output line by line.
+## Development Phases
 
-1- Create a string varaible to hold the contents of the current line of the file, it needs to persist between reads (loop iteration)
+### Phase 1: Basic File I/O & Chunking
 
-2- After reading 8 bytes, split the data on newlines to create a slice of stirngs - we are going to call these split sections "parts". There will typically only be one or two "parts" because we are only reading 8 bytes at a time.
+The initial implementation focuses on reading raw bytes from a local file source (`message.txt`) to establish the reading loop.
 
-Third step:
+* Create `message.txt` populated with arbitrary text data.
+* Implement a reader that consumes the file **8 bytes at a time**.
+* Output the raw data to `stdout` in 8-byte chunks to visualize the stream.
 
-ok let's refactor the code and create a reusable function that reads lines form a TCP connection.
+### Phase 2: Line Buffering & State Management
 
-it should contain all the logic i have already created and that keeps track of the current line's contents, reads 8 bytes at a time, etc. but!
+Since network communication rarely aligns perfectly with fixed-byte chunks, this phase introduces state persistence to handle data continuity.
 
-Note: "I’ll give you a stream of lines, you just consume them."
+* Maintain a string buffer that persists across loop iterations.
+* Upon reading an 8-byte chunk, split the data by newline characters (`\n`).
+* Accumulate "partial" lines in the buffer until a full line is resolved.
+* Format output line-by-line rather than chunk-by-chunk.
 
-- it should create a channel of strings 
-- it does the reading loop inside a a gotroutine 
-- it does not prefix the lines with the "read: " or add a newline character at the end.
-  instead, it sends one line at a time to the channel.
-- the goroutine exits when it reaches the end of the file, and the channel is closed.
-- the function returns the channel for immediate use by the caller.
-- the function closes the file when it's done reading (don't close it when the channel is returned.)
-- 
+### Phase 3: Concurrency & Stream Abstraction
+
+Refactor the reading logic into a reusable function designed for TCP streams. This function adopts a producer-consumer pattern using Go channels.
+
+**Function Specification:**
+
+> "I’ll give you a stream of lines, you just consume them."
+
+1. **Input:** Accepts a TCP connection (or reader interface).
+2. **Output:** Returns a `<-chan string` for immediate use by the caller.
+3. **Behavior:**
+* Spawns a **goroutine** to handle the read loop.
+* Sends parsed lines to the channel one at a time.
+* **Formatting:** Does *not* prefix lines with debug text (e.g., "read:") and strips trailing newlines.
+* **Cleanup:** Closes the source file/connection when reading is complete. Closes the channel upon EOF to signal the main routine to exit.
+
+
+
+### Phase 4: TCP Implementation
+
+Transition from local file I/O to network I/O. While HTTP is the goal, it relies on TCP to guarantee packet ordering and delivery. This phase utilizes `net.Listen` to handle the transport layer.
+
+**Server Logic:**
+
+* **Port:** Listens on `:42069`.
+* **Connection Handling:**
+1. Wait to `.Accept()` a new connection.
+2. Log "Connection Accepted" to the console.
+3. Pass the connection to the channel-based reader (from Phase 3).
+4. Print received lines to the console (raw output, terminating newline only).
+5. Log "Connection Closed" when the channel closes.
+
+Note on Stream Abstraction
+
+Instead of reading 8 bytes at a time from a file, we are now reading from a connection. The underlying principle is the same: both represent a continuous stream of binary data.
+
+While a file allows you to pull data (determining exactly when to read), a connection pushes data toward you. However, the interface is identical. The main function simply passes the connection object, and the logic processes the binary stream without modification.
+ 
+* **Lifecycle:** The server runs in an infinite loop until terminated (SIGINT/`Ctrl+C`).
+* **Resource Management:** Ensures the listener is `.Close()`'d on exit.
+
+## Usage
+
+To run the server and capture the output to a log file:
+
+open 2 terminals:
+
+Terminal 1:
+
+```bash
+go run main.go | tee tcp.txt
+
+```
+
+Terminal 2:
+
+```bash
+cat messages.txt | nc localhost 42069
+
+````
+
