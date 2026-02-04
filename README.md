@@ -1,123 +1,244 @@
+# HTTP Parser & Server (From Scratch in Go)
+
+## Project Overview
+
+This project implements a rudimentary **HTTP parser and TCP server** from scratch using the Go programming language. The primary goal is **deep, mechanical understanding** of how HTTP actually works by deliberately avoiding Go’s high-level `net/http` package.
+
+Instead of abstractions, this project works directly on **raw TCP streams** using Go’s `net` package. Data is read incrementally (byte chunks), buffered, reconstructed into lines, and then consumed by higher-level logic — mirroring how real HTTP servers operate internally.
+
+This is a learning-first project: correctness, clarity, and understanding take priority over features.
+
+---
+
+## Technical Architecture
+
+* **Language:** Go
+* **Networking:** `net` (TCP/IP)
+* **Concurrency Model:** Goroutines + Channels
+* **I/O Model:** Stream-based (incremental reads)
+* **Parsing Strategy:** Stateful line buffering
+
+---
+
+## Design Philosophy
+
+> Treat everything as a stream.
+
+Files and network connections are fundamentally the same abstraction: a continuous stream of bytes. This project is built around that idea.
+
+By reading from streams in small, fixed-size chunks, we:
+
+* Simulate real network behavior
+* Avoid assumptions about packet boundaries
+* Learn why buffering and state matter
+
+---
+
+## Development Phases
+
+---
+
+## Phase 1: Basic File I/O & Chunking
+
+Goal: understand raw byte streams and incremental reads.
+
+### Steps
+
+* Create a local file `message.txt` with arbitrary text
+* Open the file using Go’s `os` package
+* Read **8 bytes at a time** in a loop
+* Print each chunk directly to `stdout`
+
+### Key Insight
+
+> Reads do not align with logical data boundaries.
+
+You may receive partial words, partial lines, or multiple logical units in a single read.
+
+---
+
+## Phase 2: Line Buffering & State Management
+
+Goal: reconstruct logical lines from arbitrary byte chunks.
+
+### Approach
+
+* Maintain a persistent string buffer
+* Append newly-read bytes to the buffer
+* Split the buffer on `\n`
+* Emit complete lines
+* Preserve partial lines for the next iteration
+
+### Key Insight
+
+> Stream processing requires state.
+
+Without buffering, you cannot safely parse line-based protocols like HTTP.
+
+---
+
+## Phase 3: Concurrency & Stream Abstraction
+
+Goal: decouple reading from consuming.
+
+### Abstraction
+
+> "I’ll give you a stream of lines — you just consume them."
+
+### Function Behavior
+
+* Accepts an `io.Reader` (file or TCP connection)
+* Spawns a **goroutine** to handle reading
+* Reads incrementally
+* Emits parsed lines over a `<-chan string`
+* Strips trailing newlines
+* Closes the reader on EOF
+* Closes the channel to signal completion
+
+This turns blocking I/O into a clean, composable stream.
+
+---
+
+## Phase 4: TCP Server Implementation
+
+Goal: move from file streams to real network streams.
+
+### Server Configuration
+
+* **Protocol:** TCP
+* **Port:** `:42069`
+
+### Server Lifecycle
+
+1. Call `net.Listen("tcp", ":42069")`
+2. Accept incoming connections in a loop
+3. Log `Connection Accepted`
+4. Pass the connection to the line-stream reader
+5. Print received lines to `stdout`
+6. When the channel closes:
+
+   * Log `Connection Closed`
+   * Clean up resources
+
+The server runs indefinitely until interrupted (`Ctrl+C`).
+
+---
+
 ## Phase 5: TCP Fundamentals
 
 ### What is TCP?
 
-**TCP (Transmission Control Protocol)** is a **reliable, ordered, and connection-oriented** transport-layer protocol. Its job is to ensure that data sent from one machine arrives at another **intact**, **in order**, and **without duplication**.
+**TCP (Transmission Control Protocol)** is a **reliable, ordered, connection-oriented** transport-layer protocol. It ensures that data arrives:
 
-When an application sends data over TCP, the data is split into smaller units called **segments** (often informally called packets). TCP manages how these segments are transmitted, acknowledged, retransmitted if lost, and reassembled on the receiving side.
+* Completely
+* In order
+* Without duplication
 
----
-
-### Reliability and Ordering
-
-TCP guarantees:
-
-* **Reliable delivery** – lost segments are detected and retransmitted
-* **In-order delivery** – segments are reassembled in the correct sequence
-* **Flow control** – the sender does not overwhelm the receiver
-* **Congestion control** – the network is not overwhelmed
+TCP exposes data to applications as a **byte stream**, not discrete packets.
 
 ---
 
-### Sliding Window
+### Reliability & Sliding Window
 
-TCP uses a mechanism called a **sliding window** to control how much data can be "in flight" at any given time.
+TCP splits data into segments and uses a **sliding window** to control how many segments may be in flight.
 
 Example:
 
-* You want to send **8 segments** total
-* The sliding window size is **4**
+* Total segments: 8
+* Window size: 4
 
 Process:
 
-1. The sender transmits segments 1–4
-2. These segments are now "in flight"
-3. The receiver sends **ACKs (acknowledgements)** for received segments
-4. As ACKs arrive, the window "slides" forward
-5. The sender transmits segments 5–8
+1. Send segments 1–4
+2. Receive ACKs from the receiver
+3. Slide the window forward
+4. Send segments 5–8
 
-If a segment is lost:
-
-* The receiver does not ACK it
-* The sender retransmits the missing segment
-
-This mechanism is what makes TCP reliable.
+If a segment is lost, it is retransmitted.
 
 ---
 
-### Handshake and Connection State
+### Handshake & State
 
-TCP is **stateful** and requires a **three-way handshake** before data transmission:
+TCP requires a **three-way handshake**:
 
-1. SYN – client requests a connection
-2. SYN-ACK – server acknowledges and responds
-3. ACK – client confirms
+1. SYN
+2. SYN-ACK
+3. ACK
 
-Only after this handshake is the connection established and data allowed to flow.
+After this, both sides maintain connection state until closed.
 
 ---
 
 ### What is UDP?
 
-**UDP (User Datagram Protocol)** is a **connectionless** and **stateless** transport-layer protocol.
+**UDP (User Datagram Protocol)** is:
 
-Key characteristics:
+* Connectionless
+* Stateless
+* Unreliable
+* Unordered
 
-* No handshake
-* No acknowledgements (ACKs)
-* No retransmissions
-* No ordering guarantees
+There are no ACKs, no retransmissions, and no guarantees.
 
-The sender simply sends datagrams, and the receiver processes whatever arrives.
-
-If data is lost, duplicated, or arrives out of order, UDP does **nothing** to correct it.
+Any reliability must be implemented by the application itself.
 
 ---
 
-### Performance Trade-offs
-
-UDP is often described as "faster" than TCP because:
-
-* There is no handshake overhead
-* There is no waiting for ACKs
-* There is no retransmission logic
-
-However, this means:
-
-* The application must handle reliability if needed
-* The receiver may see incomplete or corrupted data
-
-Some systems build custom reliability on top of UDP using sequence numbers and **NACKs (negative acknowledgements)**, but this logic lives **above** UDP, not inside it.
-
----
-
-### TCP vs UDP Comparison
+### TCP vs UDP
 
 | Feature            | TCP    | UDP    |
 | ------------------ | ------ | ------ |
 | Connection         | Yes    | No     |
 | Handshake          | Yes    | No     |
 | Reliability        | Yes    | No     |
-| In-order           | Yes    | No     |
+| In Order           | Yes    | No     |
 | Flow Control       | Yes    | No     |
 | Congestion Control | Yes    | No     |
-| Speed (Raw)        | Slower | Faster |
+| Raw Speed          | Slower | Faster |
 
 ---
 
-### Why This Matters for HTTP
+### Why HTTP Uses TCP
 
-HTTP relies on TCP because:
+HTTP depends on TCP because:
 
-* Requests and responses must be complete
 * Headers must arrive before bodies
-* Data must be ordered and reliable
+* Requests must be complete
+* Responses must be ordered
 
-Your server implementation depends on TCP’s guarantees so that reading from a stream (byte-by-byte or line-by-line) behaves predictably, even though the underlying packets may arrive fragmented or delayed.
+Your line-based stream reader works *because TCP guarantees a reliable byte stream*, even though the underlying packets may arrive fragmented.
 
-This is why your stream abstraction works: **TCP turns packets into a reliable byte stream**.
+---
 
-### Phase 5 :UDP Sender 
+## Usage
 
-we are going to create a new program that yeets UDP packets at a server. We want to fully understand the difference between the TCP and UDP.
+### Terminal 1 (Run Server)
 
+```bash
+go run main.go | tee tcp.txt
+```
+
+### Terminal 2 (Send Data)
+
+```bash
+cat messages.txt | nc localhost 42069
+```
+
+
+### Phase 6:
+
+At the heart of HTTP is the HTTP-message: the format that the text in an HTTP request or response must use.
+
+start-line CRLF 
+*( field-line CRLF)
+CRLF
+[message body]
+
+CRLF (written in plain text as \r\n -> like primeagan said "Registered Nurse") is a carriage return followed by a line feed, It's a Microsoft Windows (and HTTP) style newline character.
+
+in one shell do this:
+go run ./cmd/tcplistener | tee /tmp/rawget.http
+
+and in another shell:
+curl http://localhost:42069/coffee
