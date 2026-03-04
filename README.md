@@ -230,15 +230,51 @@ cat messages.txt | nc localhost 42069
 
 At the heart of HTTP is the HTTP-message: the format that the text in an HTTP request or response must use.
 
+```bash
 start-line CRLF 
 *( field-line CRLF)
 CRLF
 [message body]
+```
 
 CRLF (written in plain text as \r\n -> like primeagan said "Registered Nurse") is a carriage return followed by a line feed, It's a Microsoft Windows (and HTTP) style newline character.
 
-in one shell do this:
+```bash
+# in one shell do this:
+
 go run ./cmd/tcplistener | tee /tmp/rawget.http
 
-and in another shell:
+# in another shell:
+ 
 curl http://localhost:42069/coffee
+```
+
+### Phase 7:
+
+## HTTP post 
+
+curl is a command line tool for making HTTP requests. if you cat the tcp.txt that we have just created, 
+you should have sth like this:
+
+```bash 
+GET /goodies HTTP/1.1
+Host: localhost:42069
+User-Agent: curl/8.6.0
+Accept: */*
+```
+
+This is what a raw HTTP message looks like - specifically a raw HTTP GET request.
+
+Ok now let's implement a raw HTTP POST request.
+
+1- First let's run our tcp listener!
+
+```bash
+go run ./cmd/tcplistener | tee /tmp/rawpost.http
+```
+
+2- send a post request:
+
+```bash
+ curl -X POST -H "Content-Type: application/json" -d '{"flavor":"dark mode"}' http://localhost:42069/coffee
+```
