@@ -21,3 +21,10 @@ run-post:
 post:
      curl -X POST -H "Content-Type: application/json" -d '{"flavor":"dark mode"}' http://localhost:42069/coffee
 
+# Install testify:
+install-test:
+     go get -u github.com/stretchr/testify/assert
+
+# install testify second approach
+test:
+    go mod tidy

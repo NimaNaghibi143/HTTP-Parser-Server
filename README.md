@@ -8,8 +8,6 @@ Instead of abstractions, this project works directly on **raw TCP streams** usin
 
 This is a learning-first project: correctness, clarity, and understanding take priority over features.
 
----
-
 ## Technical Architecture
 
 * **Language:** Go
@@ -17,8 +15,6 @@ This is a learning-first project: correctness, clarity, and understanding take p
 * **Concurrency Model:** Goroutines + Channels
 * **I/O Model:** Stream-based (incremental reads)
 * **Parsing Strategy:** Stateful line buffering
-
----
 
 ## Design Philosophy
 
@@ -32,11 +28,7 @@ By reading from streams in small, fixed-size chunks, we:
 * Avoid assumptions about packet boundaries
 * Learn why buffering and state matter
 
----
-
 ## Development Phases
-
----
 
 ## Phase 1: Basic File I/O & Chunking
 
@@ -55,8 +47,6 @@ Goal: understand raw byte streams and incremental reads.
 
 You may receive partial words, partial lines, or multiple logical units in a single read.
 
----
-
 ## Phase 2: Line Buffering & State Management
 
 Goal: reconstruct logical lines from arbitrary byte chunks.
@@ -74,8 +64,6 @@ Goal: reconstruct logical lines from arbitrary byte chunks.
 > Stream processing requires state.
 
 Without buffering, you cannot safely parse line-based protocols like HTTP.
-
----
 
 ## Phase 3: Concurrency & Stream Abstraction
 
@@ -96,8 +84,6 @@ Goal: decouple reading from consuming.
 * Closes the channel to signal completion
 
 This turns blocking I/O into a clean, composable stream.
-
----
 
 ## Phase 4: TCP Server Implementation
 
@@ -121,8 +107,6 @@ Goal: move from file streams to real network streams.
    * Clean up resources
 
 The server runs indefinitely until interrupted (`Ctrl+C`).
-
----
 
 ## Phase 5: TCP Fundamentals
 
@@ -277,4 +261,27 @@ go run ./cmd/tcplistener | tee /tmp/rawpost.http
 
 ```bash
  curl -X POST -H "Content-Type: application/json" -d '{"flavor":"dark mode"}' http://localhost:42069/coffee
+```
+
+### phase 8: 
+
+## Let's do some testing! 
+
+in our case that we are building a raw http server we need tests! so we know what we are implementing behaves the way we expect it to behave!
+so for the sake of our own comfort and nervs we are going to avoid test tables! those nested if and elses and break points and unused prints!.
+so we need our test to be as declarative as possible and we are going to avoid logic because logic is where the mistakes and error appear! so we are going to get rid of those.
+
+1- let's create a internal directory and a request directory inside of it:
+
+```bash
+mkdir -p ./internal/request
+```
+
+2- Then create a request.go file. declare that it's part of the request package.
+3- Create a request_test.go file, it's also part of the request package. and our test will go there.
+
+4- install the "testify" package as a dependency in your module.
+
+```bash
+go get -u github.com/stretchr/testify/assert
 ```
