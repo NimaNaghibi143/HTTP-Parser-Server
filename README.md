@@ -216,7 +216,7 @@ Your line-based stream reader works *because TCP guarantees a reliable byte stre
 ### Terminal 1 (Run Server)
 
 ```bash
-go run main.go | tee tcp.txt
+go run ./cmd/tcplistener/ | tee tcp.txt
 ```
 
 ### Terminal 2 (Send Data)
