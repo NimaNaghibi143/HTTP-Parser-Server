@@ -285,3 +285,37 @@ mkdir -p ./internal/request
 ```bash
 go get -u github.com/stretchr/testify/assert
 ```
+
+### Phase 9:
+
+## Parsing the Request Line:
+
+By building on top of TCP, we already have code that handles plain-text data, now we just need to take that plain text
+and turn it into structured data, ensuring that it follows the HTTP protocol.
+
+for example give the:
+```bash
+GET /coffee HTTP/1.1
+Host: localhost:42069
+User-Agent: curl/8.7.1
+Accept: */*
+
+```
+we want our HTTP parser to return a struct that looks like this:
+
+```bash
+type Request strcut {
+   RequestLine RequestLine 
+   Headers     map[string]string
+   BOdy        []byte
+}
+```
+## The Request Line: 
+
+start-line is called the request-line and has a specific format:
+
+```bash
+HTTP-version = HTTP-name "/" DIGIT "." DIGIT
+HTTP-name = %s"HTTP"
+request-line = method SP request-target SP HTTP-version
+```

@@ -3,7 +3,7 @@ defaut:
 
 # Run server for GET request assignment
 run-get:
-    go run ./cmd/tcplistener/ | tee rawget.txt
+    go run ./cmd/tcplistener/ | tee rawget.http
 
 # Send data
 send:
