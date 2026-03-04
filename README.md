@@ -319,3 +319,15 @@ HTTP-version = HTTP-name "/" DIGIT "." DIGIT
 HTTP-name = %s"HTTP"
 request-line = method SP request-target SP HTTP-version
 ```
+
+- `Note:` SP means "single space"
+
+- `Note:` There is a note we should remember when parsing the strings in the http realm. 
+   new line in the http is \r\n not \n!
+   but this is not ture all the time inside of the RFC! if the first line of the request is 
+   separated by \n you must assume that all following lines are separated by \n.
+
+### Phase 10:
+
+## Parsing a Stream
+
