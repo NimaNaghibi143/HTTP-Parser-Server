@@ -28,3 +28,7 @@ install-test:
 # install testify second approach
 test:
     go mod tidy
+
+# Run the tcp-listener and redirect the parsed request output.
+run-parse:
+   go run ./cmd/tcplistener/ | tee /temp/requestline.txt
