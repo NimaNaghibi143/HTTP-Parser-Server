@@ -210,7 +210,7 @@ cat messages.txt | nc localhost 42069
 ```
 
 
-### Phase 6:
+## Phase 6:
 
 At the heart of HTTP is the HTTP-message: the format that the text in an HTTP request or response must use.
 
@@ -233,9 +233,9 @@ go run ./cmd/tcplistener | tee /tmp/rawget.http
 curl http://localhost:42069/coffee
 ```
 
-### Phase 7:
+## Phase 7:
 
-## HTTP post 
+### HTTP post 
 
 curl is a command line tool for making HTTP requests. if you cat the tcp.txt that we have just created, 
 you should have sth like this:
@@ -263,9 +263,9 @@ go run ./cmd/tcplistener | tee /tmp/rawpost.http
  curl -X POST -H "Content-Type: application/json" -d '{"flavor":"dark mode"}' http://localhost:42069/coffee
 ```
 
-### phase 8: 
+## phase 8: 
 
-## Let's do some testing! 
+### Let's do some testing! 
 
 in our case that we are building a raw http server we need tests! so we know what we are implementing behaves the way we expect it to behave!
 so for the sake of our own comfort and nervs we are going to avoid test tables! those nested if and elses and break points and unused prints!.
@@ -286,9 +286,9 @@ mkdir -p ./internal/request
 go get -u github.com/stretchr/testify/assert
 ```
 
-### Phase 9:
+## Phase 9:
 
-## Parsing the Request Line:
+### Parsing the Request Line:
 
 By building on top of TCP, we already have code that handles plain-text data, now we just need to take that plain text
 and turn it into structured data, ensuring that it follows the HTTP protocol.
@@ -327,10 +327,27 @@ request-line = method SP request-target SP HTTP-version
    but this is not ture all the time inside of the RFC! if the first line of the request is 
    separated by \n you must assume that all following lines are separated by \n.
 
-### Phase 10:
+## Phase 10:
 
-## Parsing a Stream
+### Parsing a Stream
 
 TCP (and by extention, HTTP) is a streaming protocol, which means we recieve data in chunks and should be able to parse it as it comes in.
 so we need to manage the state of our parser to handle incomplete reads. The challenge is that it needs to be smart enough to know that it's not done yet and keep reading until it gets the full request.
+
+our buffer size here is tiny.If you look at the tests, you'll also recall that we added some test cases where only 1 or 2 bytes are read at a time. We want to test at these small buffer sizers to ensure that our parser can handle the edge cases where even sth as small as the request line is split across multiple reads.
+
+- `NOTE:` There is a difference between parsing and reading.
+
+This was confusing for me as well but it's important to understand the difference. When we read, all 
+we're doing is moving the data from the reader (which in the case of HTTP is a network connection, but it could be a file as well) into our program. When we parse, we are taking that data and interpreting it (moving it from a []byte to a RequestLine struct.) Once it's parsed, we can discard it from the buffer to save memory.
+
+### We built a state machine
+
+In this phase we have built the state machine. the combination of `RequestFromReader` and `Request.parse` functions creates our state machine. We keep track of several piecese of state:
+
+* How much data we have read from the `io.Reader` into the buffer
+* How much data we have parsed from the buffer
+* The current `state` actually i myself don't like the term "state" i think it's a loaded term(initialized, done, etc).
+
+
 
