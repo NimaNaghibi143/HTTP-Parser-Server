@@ -1,5 +1,3 @@
-# HTTP Parser & Server (From Scratch in Go)
-
 ## Project Overview
 
 This project implements a rudimentary **HTTP parser and TCP server** from scratch using the Go programming language. The primary goal is **deep, mechanical understanding** of how HTTP actually works by deliberately avoiding Go’s high-level `net/http` package.
@@ -27,8 +25,6 @@ By reading from streams in small, fixed-size chunks, we:
 * Simulate real network behavior
 * Avoid assumptions about packet boundaries
 * Learn why buffering and state matter
-
-## Development Phases
 
 ## Phase 1: Basic File I/O & Chunking
 
@@ -349,5 +345,17 @@ In this phase we have built the state machine. the combination of `RequestFromRe
 * How much data we have parsed from the buffer
 * The current `state` actually i myself don't like the term "state" i think it's a loaded term(initialized, done, etc).
 
+## Phase 11:
 
+### Connect the parsing
+
+Ok so far we have got all the tests passing, now it's time to actually use our parser in our tcplistener.
+
+```bash
+# Run the tcp-listener and redirect the parsed request output.
+go run ./cmd/tcplistener/ | tee /temp/requestline.txt
+
+# in another shell, send this request to it:
+curl http://locahost:42069/nime/naghibi
+```
 
