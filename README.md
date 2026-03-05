@@ -331,3 +331,6 @@ request-line = method SP request-target SP HTTP-version
 
 ## Parsing a Stream
 
+TCP (and by extention, HTTP) is a streaming protocol, which means we recieve data in chunks and should be able to parse it as it comes in.
+so we need to manage the state of our parser to handle incomplete reads. The challenge is that it needs to be smart enough to know that it's not done yet and keep reading until it gets the full request.
+
