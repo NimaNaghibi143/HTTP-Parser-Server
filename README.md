@@ -357,3 +357,5 @@ but this is not:
 'Host : localhost:42069 '
 ```
 
+`NOTE:` I'm not a pro in terms of developing in GO but i think if we consider the HEADERS a seprate pacakge we are going to be happy because we are going to parse the headers both in the requests and responses.
+
