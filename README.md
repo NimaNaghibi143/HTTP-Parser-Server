@@ -340,3 +340,20 @@ curl http://localhost:42069/nima/naghibi
 ### Headers
 
 in the RFC they go by the name "field-line". Each field line consists of a case-insensitive field name followed by a colon (":"), optional leading whitespace, the field line value, and optional trailing whitespace.
+
+```bash 
+field-line = field-name ":" OWS field-value OWS
+```
+
+`NOTE:` according to the documentation there could be unlimited amount of whitespaces before and after the field-value (header-value).But when parsing a "field-name", `There must be no spaces between the ":" and the field-name`. so basically these are valid:
+
+```bash 
+'Host: localhost:42069'
+'           Host: localhost:42069'
+```
+but this is not:
+
+```bash
+'Host : localhost:42069 '
+```
+
