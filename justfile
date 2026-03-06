@@ -1,6 +1,10 @@
 defaut:
     @just --list
 
+# Run tests
+test:
+    go test ./internal/...
+
 # Run server for GET request assignment
 run-get:
     go run ./cmd/tcplistener/ | tee temp/rawget.http
@@ -24,10 +28,6 @@ post:
 # Install testify:
 install-test:
      go get -u github.com/stretchr/testify/assert
-
-# install testify second approach
-test:
-    go mod tidy
 
 # Run the tcp-listener and redirect the parsed request output.
 run-parse:
