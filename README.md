@@ -1,30 +1,6 @@
 ## Project Overview
 
-This project implements a rudimentary **HTTP parser and TCP server** from scratch using the Go programming language. The primary goal is **deep, mechanical understanding** of how HTTP actually works by deliberately avoiding Go’s high-level `net/http` package.
-
-Instead of abstractions, this project works directly on **raw TCP streams** using Go’s `net` package. Data is read incrementally (byte chunks), buffered, reconstructed into lines, and then consumed by higher-level logic — mirroring how real HTTP servers operate internally.
-
-This is a learning-first project: correctness, clarity, and understanding take priority over features.
-
-## Technical Architecture
-
-* **Language:** Go
-* **Networking:** `net` (TCP/IP)
-* **Concurrency Model:** Goroutines + Channels
-* **I/O Model:** Stream-based (incremental reads)
-* **Parsing Strategy:** Stateful line buffering
-
-## Design Philosophy
-
-> Treat everything as a stream.
-
-Files and network connections are fundamentally the same abstraction: a continuous stream of bytes. This project is built around that idea.
-
-By reading from streams in small, fixed-size chunks, we:
-
-* Simulate real network behavior
-* Avoid assumptions about packet boundaries
-* Learn why buffering and state matter
+This is my first Golang project! and i want to learn this language by implementing HTTP by my self based on the RFC doc 9110 (HTTP semantics)
 
 ## Phase 1: Basic File I/O & Chunking
 
@@ -359,3 +335,8 @@ go run ./cmd/tcplistener/ | tee temp/requestline.txt
 curl http://localhost:42069/nima/naghibi
 ```
 
+## Phase 12:
+
+### Headers
+
+in the RFC they go by the name "field-line". Each field line consists of a case-insensitive field name followed by a colon (":"), optional leading whitespace, the field line value, and optional trailing whitespace.
