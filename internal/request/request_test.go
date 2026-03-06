@@ -50,7 +50,7 @@ func TestRequestLineParse(t *testing.T) {
 
 	r, err := RequestFromReader(reader)
 	require.NoError(t, err)
-	require.NoNil(t, r)
+	require.NotNil(t, r)
 	assert.Equal(t, "GET", r.RequestLine.Method)
 	assert.Equal(t, "/", r.RequestLine.RequestTarget)
 	assert.Equal(t, "1.1", r.RequestLine.HttpVersion)
@@ -62,7 +62,7 @@ func TestRequestLineParse(t *testing.T) {
 
 	r, err = RequestFromReader(reader)
 	require.NoError(t, err)
-	require.NoNil(t, r)
+	require.NotNil(t, r)
 	assert.Equal(t, "GET", r.RequestLine.Method)
 	assert.Equal(t, "/coffee", r.RequestLine.RequestTarget)
 	assert.Equal(t, "1.1", r.RequestLine.HttpVersion)

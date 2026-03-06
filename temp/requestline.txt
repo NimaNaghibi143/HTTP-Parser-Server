@@ -1,0 +1,5 @@
+Server is listening on port 42069...
+Request line: 
+- Method: GET
+- Target: /nima/naghibi
+- Version: 1.1

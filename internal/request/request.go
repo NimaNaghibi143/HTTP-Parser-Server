@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"unicode"
 )
 
 type parserState string
@@ -51,6 +52,12 @@ func parseRequestLine(b []byte) (*RequestLine, int, error) {
 	parts := bytes.Split(startLine, []byte(" "))
 	if len(parts) != 3 {
 		return nil, 0, ErrorMalformedRequestLine
+	}
+
+	for _, c := range string(parts[0]) {
+		if !unicode.IsUpper(c) {
+			return nil, 0, ErrorMalformedRequestLine
+		}
 	}
 
 	httpParts := bytes.Split(parts[2], []byte("/"))
@@ -129,8 +136,8 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 			return nil, err
 		}
 
-		copy(buf, buf[readN:bufLen])
-		bufLen -= readN
+		copy(buf, buf[readN:bufLen+n])
+		bufLen = bufLen + n - readN
 	}
 
 	return request, nil

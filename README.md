@@ -353,9 +353,9 @@ Ok so far we have got all the tests passing, now it's time to actually use our p
 
 ```bash
 # Run the tcp-listener and redirect the parsed request output.
-go run ./cmd/tcplistener/ | tee /temp/requestline.txt
+go run ./cmd/tcplistener/ | tee temp/requestline.txt
 
 # in another shell, send this request to it:
-curl http://locahost:42069/nime/naghibi
+curl http://localhost:42069/nima/naghibi
 ```
 

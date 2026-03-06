@@ -3,7 +3,7 @@ defaut:
 
 # Run server for GET request assignment
 run-get:
-    go run ./cmd/tcplistener/ | tee rawget.http
+    go run ./cmd/tcplistener/ | tee temp/rawget.http
 
 # Send data
 send:
@@ -15,7 +15,7 @@ get:
 
 # Run server for POST request assignment
 run-post:
-    go run ./cmd/tcplistener/ | tee rawpost.http
+    go run ./cmd/tcplistener/ | tee temp/rawpost.http
 
 # Send a POST request to the server
 post:
@@ -31,4 +31,4 @@ test:
 
 # Run the tcp-listener and redirect the parsed request output.
 run-parse:
-   go run ./cmd/tcplistener/ | tee /temp/requestline.txt
+   go run ./cmd/tcplistener/ | tee temp/requestline.txt
