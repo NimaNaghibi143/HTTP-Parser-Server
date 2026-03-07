@@ -377,3 +377,26 @@ in other words, a field-name must contain only:
 * Special Chars: `!`, `$`, `#`, `%`, `^`, `&`, `*`, `+`, `-`, `_`, ...
 
 and at least a length of 1.
+
+## Phase 14:
+
+### Multiple values:
+
+ok for more conprehensive inforamtion i'mma use the RFC documentation it self for explaining this part.
+
+### Field Lines and Combined Field Value:
+
+When a field name is only present once in a section, the combined "field value" for that field
+consists of the corresponding field line value. When a field name is repeated within a section, its
+combined field value consists of the list of corresponding field line values within that section,
+concatenated in order, with each field line value separated by a comma.
+
+```bash
+# For example, this section:
+Example-Field: Foo, Bar
+Example-Field: Baz
+```
+
+contains two field lines, both with the field name "Example-Field". The first field line has a field
+line value of "Foo, Bar", while the second field line value is "Baz". The field value for "Example-
+Field" is the list "Foo, Bar, Baz".
