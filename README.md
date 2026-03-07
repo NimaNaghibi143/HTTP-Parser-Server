@@ -400,3 +400,8 @@ Example-Field: Baz
 contains two field lines, both with the field name "Example-Field". The first field line has a field
 line value of "Foo, Bar", while the second field line value is "Baz". The field value for "Example-
 Field" is the list "Foo, Bar, Baz".
+
+`NOTE:` A server MUST NOT apply a request to the target resource until it receives the entire request
+header section, since later header field lines might include conditionals, authentication
+credentials, or deliberately misleading duplicate header fields that could impact request
+processing.
