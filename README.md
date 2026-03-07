@@ -360,3 +360,20 @@ but this is not:
 
 `NOTE:` I'm not a pro in terms of developing in GO but i think if we consider the HEADERS a seprate pacakge we are going to be happy because we are going to parse the headers both in the requests and responses.
 
+## Phase 13:
+
+### Constraits
+
+we need to implement `Case Insensivity`! the keys (not necessariy values) are case insensitive! if you use the hash map directly, you'll have to account for `Content-Length` and `content-length` being the same on your own.
+
+### Valid chars 
+
+based on the RFC doc, field-name has an implicit definition of a token.
+in other words, a field-name must contain only:
+
+* Uppercase letters: A-Z
+* Lowercase letters: a-z
+* Digits: 0-9 
+* Special Chars: `!`, `$`, `#`, `%`, `^`, `&`, `*`, `+`, `-`, `_`, ...
+
+and at least a length of 1.
