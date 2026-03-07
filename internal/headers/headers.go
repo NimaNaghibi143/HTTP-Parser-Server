@@ -43,11 +43,11 @@ func (h Headers) Parse(data []byte) (int, bool, error) {
 		// Empty header
 		if idx == 0 {
 			done = true
+			read += len(rn)
 			break
 		}
 
-		fmt.Printf("header: \"%s\"\n", string(data[read:idx]))
-		name, value, err := parseHeader(data[read:idx])
+		name, value, err := parseHeader(data[read : read+idx])
 		if err != nil {
 			return 0, false, err
 		}
