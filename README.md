@@ -344,6 +344,7 @@ in the RFC they go by the name "field-line". Each field line consists of a case-
 ```bash 
 field-line = field-name ":" OWS field-value OWS
 ```
+`NOTE:` OWS means optional white space
 
 `NOTE:` according to the documentation there could be unlimited amount of whitespaces before and after the field-value (header-value).But when parsing a "field-name", `There must be no spaces between the ":" and the field-name`. so basically these are valid:
 
