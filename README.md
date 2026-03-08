@@ -428,3 +428,24 @@ Headers:
 ```
 
 We need to iterate the keys.
+
+## Phase 16
+
+### Parsing the body
+
+in an HTTP-message:
+
+```bash
+HTTP-message = start-line CRLF
+               *( field-line CRLF)
+               CRLF
+               [ message-body ]
+```
+
+our current code parses the:
+
+* start-line
+* field-line
+* the extra CRLF between headers and the body
+
+now it's time to parse the [ message-body ].
