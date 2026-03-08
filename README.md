@@ -412,3 +412,19 @@ processing.
 ### Add to parse
 
 it's time to add this header parser to our little state machine and parse the full set of headers.
+ok now it's time for me to add this into the tcplistener and parse the live request's headers.
+
+what we expect:
+
+```bash
+Request line:
+- Method: METHOD
+- Target: TARGET
+- Version: VERSION
+Headers:
+- KEY: VALUE
+- KEY: VALUE
+...
+```
+
+We need to iterate the keys.

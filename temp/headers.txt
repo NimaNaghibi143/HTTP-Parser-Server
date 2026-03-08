@@ -1,0 +1,9 @@
+Server is listening on port 42069...
+Request line: 
+- Method: GET
+- Target: /use-neovim-btw
+- Version: 1.1
+Headers: 
+- host: localhost:42069
+- user-agent: curl/8.7.1
+- accept: */*
