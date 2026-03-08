@@ -4,15 +4,19 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log/slog"
 	"unicode"
+
+	"http.nima.strive/internal/headers"
 )
 
 type parserState string
 
 const (
-	StateInit  parserState = "init"
-	StateDone  parserState = "done"
-	StateError parserState = "error"
+	StateInit    parserState = "init"
+	StateHeaders parserState = "headers"
+	StateDone    parserState = "done"
+	StateError   parserState = "error"
 )
 
 type RequestLine struct {
@@ -23,12 +27,14 @@ type RequestLine struct {
 
 type Request struct {
 	RequestLine RequestLine
+	Headers     *headers.Headers
 	state       parserState
 }
 
 func newRequest() *Request {
 	return &Request{
-		state: StateInit,
+		state:   StateInit,
+		Headers: headers.NewHeaders(),
 	}
 }
 
@@ -81,12 +87,16 @@ func (r *Request) parse(data []byte) (int, error) {
 	// this is the state machine for parsing the http request.
 outer:
 	for {
+		currentData := data[read:]
+		slog.Info("Request#parse", "currentData", string(currentData))
+
 		switch r.state {
 		case StateError:
 			return 0, ErrorRequestInErrorState
 
 		case StateInit:
-			rl, n, err := parseRequestLine(data[read:])
+			slog.Info("Request#parse state-init", "read", 0)
+			rl, n, err := parseRequestLine(currentData)
 			if err != nil {
 				r.state = StateError
 				return 0, err
@@ -98,13 +108,35 @@ outer:
 
 			r.RequestLine = *rl
 			read += n
+			r.state = StateHeaders
 
-			r.state = StateDone
+		case StateHeaders:
+			slog.Info("Request#parse state-headers", "read", read)
+			n, done, err := r.Headers.Parse(currentData)
+			if err != nil {
+				r.state = StateError
+				return 0, err
+			}
+
+			if n == 0 {
+				break outer
+			}
+
+			read += n
+
+			if done {
+				r.state = StateDone
+			}
+
 		case StateDone:
 			break outer
+
+		default:
+			panic("I just fucked it up some where in the code!")
 		}
 	}
 
+	slog.Info("Request#parse -- return", "state", r.state, "read", read)
 	return read, nil
 }
 
