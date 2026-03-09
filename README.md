@@ -449,3 +449,13 @@ our current code parses the:
 * the extra CRLF between headers and the body
 
 now it's time to parse the [ message-body ].
+
+According to RFC9110 8.6:
+
+> A user agent SHOULD send Content-Length in a request...
+
+and should has a specific meaning in RFC per RFC2119:
+
+>This word, or the adjective "RECOMENDED", mean that there may exist valid reasons in particular circumstances to ignore a particular item, but the full implications must be understood and carefully weighted before choosing a different course.
+
+All this to say, for our implementation we are going to **assume that if there is no *Content-length* header, there is no body present.** this is a safe assumption for our purposes, though might not be true in all cases in the wild.
