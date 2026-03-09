@@ -3,7 +3,6 @@ package headers
 import (
 	"bytes"
 	"fmt"
-	"log/slog"
 	"strings"
 )
 
@@ -42,7 +41,6 @@ func NewHeaders() *Headers {
 
 func parseHeader(fieldLine []byte) (string, string, error) {
 	parts := bytes.SplitN(fieldLine, []byte(":"), 2)
-	slog.Info("parseHeader", "fieldLine", string(fieldLine))
 	if len(parts) != 2 {
 		return "", "", fmt.Errorf("Malformed field line!")
 	}
@@ -58,8 +56,9 @@ func parseHeader(fieldLine []byte) (string, string, error) {
 }
 
 // getter
-func (h *Headers) Get(name string) string {
-	return h.headers[strings.ToLower(name)]
+func (h *Headers) Get(name string) (string, bool) {
+	str, ok := h.headers[strings.ToLower(name)]
+	return str, ok
 }
 
 // setter

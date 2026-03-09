@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log/slog"
+	"strconv"
 	"unicode"
 
 	"http.nima.strive/internal/headers"
@@ -17,6 +17,7 @@ const (
 	StateHeaders parserState = "headers"
 	StateDone    parserState = "done"
 	StateError   parserState = "error"
+	StateBody    parserState = "body"
 )
 
 type RequestLine struct {
@@ -29,13 +30,34 @@ type Request struct {
 	RequestLine RequestLine
 	Headers     *headers.Headers
 	state       parserState
+	Body        string
 }
 
 func newRequest() *Request {
 	return &Request{
 		state:   StateInit,
 		Headers: headers.NewHeaders(),
+		Body:    "",
 	}
+}
+
+func getInt(headers *headers.Headers, name string, defaultValue int) int {
+	valueStr, exists := headers.Get(name)
+	if !exists {
+		return defaultValue
+	}
+
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		return defaultValue
+	}
+
+	return value
+}
+
+func (r *Request) hasBody() bool {
+	length := getInt(r.Headers, "content-length", 0)
+	return length > 0
 }
 
 var ErrorMalformedRequestLine = fmt.Errorf("Malformed request-line!")
@@ -85,17 +107,18 @@ func parseRequestLine(b []byte) (*RequestLine, int, error) {
 func (r *Request) parse(data []byte) (int, error) {
 	read := 0
 	// this is the state machine for parsing the http request.
-outer:
+dance:
 	for {
 		currentData := data[read:]
-		slog.Info("Request#parse", "currentData", string(currentData))
+		if len(currentData) == 0 {
+			break dance
+		}
 
 		switch r.state {
 		case StateError:
 			return 0, ErrorRequestInErrorState
 
 		case StateInit:
-			slog.Info("Request#parse state-init", "read", 0)
 			rl, n, err := parseRequestLine(currentData)
 			if err != nil {
 				r.state = StateError
@@ -103,7 +126,7 @@ outer:
 			}
 
 			if n == 0 {
-				break outer
+				break dance
 			}
 
 			r.RequestLine = *rl
@@ -111,7 +134,6 @@ outer:
 			r.state = StateHeaders
 
 		case StateHeaders:
-			slog.Info("Request#parse state-headers", "read", read)
 			n, done, err := r.Headers.Parse(currentData)
 			if err != nil {
 				r.state = StateError
@@ -119,24 +141,41 @@ outer:
 			}
 
 			if n == 0 {
-				break outer
+				break dance
 			}
 
 			read += n
 
 			if done {
-				r.state = StateDone
+				if r.hasBody() {
+					r.state = StateBody
+				} else {
+					r.state = StateDone
+				}
+			}
+
+		case StateBody:
+			length := getInt(r.Headers, "content-length", 0)
+			if length == 0 {
+				panic("chunked not implemented")
+			}
+
+			remaining := min(length-len(r.Body), len(currentData))
+			r.Body += string(currentData[:remaining])
+			read += remaining
+
+			if len(r.Body) == length {
+				r.state = StateBody
 			}
 
 		case StateDone:
-			break outer
+			break dance
 
 		default:
 			panic("I just fucked it up some where in the code!")
 		}
 	}
 
-	slog.Info("Request#parse -- return", "state", r.state, "read", read)
 	return read, nil
 }
 
