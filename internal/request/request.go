@@ -165,7 +165,7 @@ dance:
 			read += remaining
 
 			if len(r.Body) == length {
-				r.state = StateBody
+				r.state = StateDone
 			}
 
 		case StateDone:
@@ -198,17 +198,26 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 	buf := make([]byte, 1024)
 	bufLen := 0
 	for !request.done() {
-		n, err := reader.Read(buf[bufLen:])
-		if err != nil {
-			return nil, err
+		n, readErr := reader.Read(buf[bufLen:])
+		bufLen += n
+		if n > 0 {
+			readN, err := request.parse(buf[:bufLen])
+			if err != nil {
+				return nil, err
+			}
+			copy(buf, buf[readN:bufLen])
+			bufLen -= readN
 		}
-		readN, err := request.parse(buf[:bufLen+n])
-		if err != nil {
-			return nil, err
+		if readErr != nil {
+			if readErr == io.EOF {
+				break
+			}
+			return nil, readErr
 		}
+	}
 
-		copy(buf, buf[readN:bufLen+n])
-		bufLen = bufLen + n - readN
+	if !request.done() {
+		return nil, fmt.Errorf("incomplete request: connection closed before request was fully received")
 	}
 
 	return request, nil

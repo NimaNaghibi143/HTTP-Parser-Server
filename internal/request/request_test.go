@@ -44,7 +44,7 @@ func TestRequestLineParse(t *testing.T) {
 	// assert keep running the test and only fails at specifc spots! basically fails
 	// when the whole test is done but require fails imediatly!.
 	reader := &chunkReader{
-		data:            "GET / HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n",
+		data:            "GET / HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n ",
 		numBytesPerRead: 3,
 	}
 
@@ -56,7 +56,7 @@ func TestRequestLineParse(t *testing.T) {
 	assert.Equal(t, "1.1", r.RequestLine.HttpVersion)
 
 	reader = &chunkReader{
-		data:            "GET /coffee HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n",
+		data:            "GET /coffee HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n ",
 		numBytesPerRead: 1,
 	}
 
@@ -83,7 +83,7 @@ func TestRequestLineParse(t *testing.T) {
 	// assert.Equal(t, "1.1", r.RequestLine.HttpVersion)
 
 	//Test: invalid number of parts in request line
-	_, err = RequestFromReader(strings.NewReader("/coffee / HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
+	_, err = RequestFromReader(strings.NewReader("/coffee / HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n "))
 	require.Error(t, err)
 }
 
@@ -111,7 +111,7 @@ func TestParseHeaders(t *testing.T) {
 
 	// Test: Malformed Header
 	reader = &chunkReader{
-		data:            "GET / HTTP/1.1\r\nHost localhost:42069\r\n\r\n",
+		data:            "GET / HTTP/1.1\r\nHost localhost:42069\r\n\r\n ",
 		numBytesPerRead: 3,
 	}
 	r, err = RequestFromReader(reader)
