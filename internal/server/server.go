@@ -10,8 +10,10 @@ type Server struct {
 	closed bool
 }
 
-func runConnection(s *Server, conn io.ReadCloser) {
-
+func runConnection(s *Server, conn io.ReadWriteCloser) {
+	out := []byte("HTTP/1.1 200 ok\r\nContent-Type: text/plain\r\n\r\nHello world!")
+	conn.Write(out)
+	conn.Close()
 }
 
 func runServer(s *Server, listener net.Listener) {
@@ -30,7 +32,7 @@ func runServer(s *Server, listener net.Listener) {
 }
 
 func Serve(port uint16) (*Server, error) {
-	listener, err := net.Listen("tcp", fmt.Sprintf("%d", port))
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 
 	if err != nil {
 		return nil, err

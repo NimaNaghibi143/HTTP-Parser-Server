@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"http.nima.strive/internal/server"
 )
 
 const port = 42069
