@@ -476,3 +476,7 @@ Body:
 BODY_STRING
 
 ```
+
+## Some Notes
+
+HTTP is the primary protocol on the web, and it's on top of TCP (http 1.1 & 2). but http 3 is actually on top of UDP which actually implements a form of TCP(quic).
