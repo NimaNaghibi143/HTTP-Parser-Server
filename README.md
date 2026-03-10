@@ -480,3 +480,9 @@ BODY_STRING
 ## Some Notes
 
 HTTP is the primary protocol on the web, and it's on top of TCP (http 1.1 & 2). but http 3 is actually on top of UDP which actually implements a form of TCP(quic).
+
+> [!NOTE]
+> Remember that HTTP responses follow the same HTTP message format. the only differece is that the start-line instead of a request-line.
+
+> [!IMPORTANT]
+> **A client SHOULD ignore the reason-phrase content because it is not a reliable channel for inforamtion** (it might be translated for a given locale, overwritten by intermidiaries, or discarded when the message is forwarded via other versions of HTTP). A server **MUST** send the space that separates the status-code from the reason-phrase even when the reason-phrase is absent.
