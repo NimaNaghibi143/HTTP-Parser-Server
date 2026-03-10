@@ -73,5 +73,9 @@ func main() {
 		r.Headers.ForEach(func(n, v string) {
 			fmt.Printf("- %s: %s\n", n, v)
 		})
+		cl, ok := r.Headers.Get("content-length")
+		fmt.Printf("content-length present: %v, value: %q\n", ok, cl)
+		fmt.Printf("Body:\n")
+		fmt.Printf("%s\n", r.Body)
 	}
 }

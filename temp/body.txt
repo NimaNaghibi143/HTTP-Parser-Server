@@ -1,0 +1,14 @@
+Server is listening on port 42069...
+Request line: 
+- Method: POST
+- Target: /coffee
+- Version: 1.1
+Headers: 
+- host: localhost:42069
+- user-agent: curl/8.7.1
+- accept: */*
+- content-type: application/json
+- content-length: 39
+content-length present: true, value: "39"
+Body:
+{"type": "dark mode", "size": "medium"}
