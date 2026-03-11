@@ -1,5 +1,10 @@
 package response
 
+import (
+	"fmt"
+	"io"
+)
+
 type Response struct {
 }
 
@@ -10,3 +15,22 @@ const (
 	StatusBadRequest          StatusCode = 400
 	StatusInternalServerError StatusCode = 500
 )
+
+func WriteStatusLine(w io.Writer, statusCode StatusCode) error {
+	statusLine := []byte{}
+
+	switch statusCode {
+	case StatusOk:
+		statusLine = []byte("HTTP/1.1 200 OK")
+	case StatusBadRequest:
+		statusLine = []byte("HTTP/1.1 400 Bad Reqeust")
+	case StatusInternalServerError:
+		statusLine = []byte("HTTP/1.1 500 Internal Server Errorq")
+	default:
+		return fmt.Errorf("Unrecognized error code!")
+	}
+
+	_, err := w.Write(statusLine)
+	return err
+
+}
