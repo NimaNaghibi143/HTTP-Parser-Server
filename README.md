@@ -570,3 +570,120 @@ Chunked encoding is most often used for:
 ```bash
 curl --http1.1 -vvv https://httpbin.org/stream/5
 ```
+
+### Testing the httpserver
+
+```bash
+echo -e "GET /httpbin/stream/100 HTTP/1.1\r\nHost: localhost:42069\r\nConnection: close\r\n\r\n" | nc localhost 42069
+```
+
+### Trailers implementation
+
+You can have additional headers at the end of chunked encoding called trailers. They work the same way that headers do with one catch: you have to specidfy the names of the trailers in a Trailer header.
+
+Trailers are often used to send information about the message body that **can't be known until the message body is fully sent.** For example, the hash of the message body.
+
+## What is a Trailer attack?
+
+### Context: HTTP 1.1 and Transfer Coding
+
+HTTP/1.1 introduced persistent connections (keep-alive), allowing multiple requests/responses over a single TCP connection. To handle potentially unknown-length messages, two main mechanisms were introduced:
+
+1.  **Content-Length:** Header specifying the exact number of bytes in the message body (and implicitly the entire message, including headers).
+2.  **Chunked Transfer Coding:** A mechanism where the message body is divided into chunks of arbitrary length, each preceded by its size (in hex) and terminated by a zero-sized chunk. This allows streaming data.
+
+**The Problem: Ambiguity with `Transfer-Encoding` and `Content-Length`**
+
+>[!NOTE]
+>When both `Transfer-Encoding: chunked` and `Content-Length` headers are present, their relationship is ambiguous according to the HTTP specification. The specification dictates that `chunked` is the *preferred* encoding if both are present, and `Content-Length` should be ignored. However, misconfigured servers or clients might not adhere strictly to this.
+
+**What is a Trailer Attack?**
+
+A Trailer Attack specifically exploits how certain servers handle the `Trailer` header in conjunction with chunked encoding, especially when misconfigured alongside `Content-Length`.
+
+**Key Concepts:**
+
+*   **Trailers:** HTTP allows adding header fields after the final chunk of a chunked transfer encoding. These are called "trailing headers". This is done using the `Trailer` header field to specify which headers should be treated as trailers.
+    *   Example `Trailer` header: `Trailer: Content-Length`
+    *   This means that the `Content-Length` header should be placed after the final chunk, not before the body.
+
+**How the Trailer Attack Works (HTTP Request Smuggling)**
+
+The attack leverages a server's incorrect handling of the `Trailer` header when receiving chunked-encoded requests, especially when a `Content-Length` header is also present (which should normally be ignored if `chunked` is present).
+
+**Scenario:**
+
+1. **Malicious Client:**
+    *   The client sends an HTTP request using chunked transfer encoding.
+    *   This request *also* includes a `Content-Length` header (which violates the standard if `chunked` is present, but attackers do this to confuse servers).
+    *   Crucially, the client *also* includes a `Trailer` header specifying a header field that the targeted server might pay attention to (e.g., `Trailer: Content-Length`).
+
+    Example Malicious Request (Client Perspective):
+
+    ```bash
+    POST /vulnerable HTTP/1.1
+    Host: example.com
+    Content-Length: 100   <--- Maliciously included, ignored by standard but present
+    Transfer-Encoding: chunked
+    Trailer: Content-Length <--- Specifies that 'Content-Length' is a trailer
+
+    ... [chunked body data] ...
+    ```
+
+2.  **Server Processing (Exploiting Misconfiguration):**
+    *   **Server A (Standard Compliant):** Sees `Transfer-Encoding: chunked`, ignores `Content-Length`. Processes the trailers correctly (placing `Content-Length` after the final chunk). This server is not vulnerable to this specific attack vector.
+    *   **Server B (Misconfigured/Non-Compliant):**
+        *   Sees the `Content-Length: 100` header first. It might *incorrectly* start expecting the request body to be exactly 100 bytes *before* even processing the `Transfer-Encoding: chunked` header.
+        *   It then receives the chunked data. When it reaches the final zero-chunk, it looks at the `Content-Length` header it saw *earlier* and interprets the following data (which should be the trailer `Content-Length: ...`) as part of the body *after* the chunked data, because its initial `Content-Length` assumption is still active.
+
+    Let's visualize the data stream (Client -> Server B):
+
+    ```bash
+    [Headers: ..., Content-Length: 100, Transfer-Encoding: chunked, Trailer: Content-Length, ...]
+    [Chunk 1: 'a'*50]           <-- Server B sees this, thinks "Body so far: 50 bytes"
+    [Chunk 2: 'a'*50]           <-- Server B sees this, thinks "Body so far: 100 bytes" (hits the declared Content-Length)
+    [Final Chunk: 0\r\n\r\n]    <-- Server B: "Body received! Now process the trailer header ('Content-Length') as if it were part of the body stream?"
+
+    [Trailer Header: Content-Length: 50] <--- This line is actually *after* the final chunk, but Server B thinks it's part of the body because it already hit the Content-Length
+    [Chunk 3: 'a'*50]           <-- Server B sees this *after* processing the header it thought was part of the body, thinking it's more body data
+    [Final Chunk: 0\r\n\r\n]    <-- Server B: "Body finished. Now process the response..."
+
+    ```
+
+    **Exploit Outcome:**
+
+    *   Server B now believes the request body is the data from `Chunk 3` (50 bytes), not the initial chunks.
+    *   Crucially, it uses the `Content-Length: 50` *from the trailer* as the perceived length of the request body.
+    *   This allows the attacker to construct two *different* requests within one chunked transfer stream.
+
+**Attack Vectors (Examples):**
+
+1.  **Blind SQL Injection:** The attacker can structure the request so that part of the body (which the server misinterprets due to the smuggling) contains SQL commands designed to query the database.
+2.  **Server Side-Channel Attacks:** The attacker crafts the request so that the body seen by one server (Server B) is different from the body seen by another server (Server A), potentially bypassing security restrictions or authentication mechanisms.
+3.  **Access Control Bypass:** By smuggling credentials or other data into the request body that would be ignored or misinterpreted by standard-compliant servers, the attacker can bypass authentication or access controls.
+4.  **Cross-Site Scripting (XSS):** Crafting the smuggled data to inject malicious scripts.
+
+**Mitigations:**
+
+1.  **Strict Chunked Transfer Encoding Parsing (Server Configuration):** This is the most critical mitigation.
+    *   Servers must strictly adhere to the specification: `chunked` overrides `Content-Length`, and `Content-Length` should be ignored if `chunked` is present.
+    *   Servers must correctly parse trailers, placing them *after* the final chunk, not interpreting them as part of the body.
+    *   Examples:
+        *   **Apache:** Configure `chunked_transfer_encoding` directive appropriately (though full compliance can be tricky). Use `Trailer` header correctly.
+        *   **Nginx:** Use the `chunked_length` parameter in `http{...}` or `server{...}` blocks, and ensure `chunked` is prioritized over `Content-Length`. Validate `Trailer` headers properly.
+        *   **IIS:** Ensure settings prioritize `chunked` over `Content-Length` and handle trailers correctly.
+
+2.  **Remove/Ignore Malicious `Content-Length` Headers:** While not strictly compliant, some servers might choose to ignore `Content-Length` headers if `Transfer-Encoding: chunked` is present, preventing the ambiguity.
+
+3.  **Client-Side Protections (Less Common):** Generally, fixing server-side compliance is preferred. Client-side checks are difficult because they rely on knowing the server's behavior.
+
+4.  **Security Headers (Indirect):**
+    *   `Expect-CT` (Connection Termination): Helps prevent man-in-the-middle attacks, but doesn't directly prevent smuggling.
+    *   `Strict-Transport-Security` (HSTS): Ensures HTTPS, which uses HTTP/1.1, but doesn't fix server parsing issues.
+
+5.  **Web Application Firewalls (WAFs):**
+    *   Modern WAFs can detect patterns indicative of request smuggling, including Trailer attacks, by analyzing the differences between how clients and servers parse the request stream.
+
+**Conclusion:**
+
+The Trailer Attack is a sophisticated HTTP Request Smuggling technique exploiting ambiguities in how servers parse `Content-Length`, `Transfer-Encoding: chunked`, and `Trailer` headers. It allows an attacker to send a single request stream that is interpreted differently by various servers, leading to potential security breaches. The primary mitigation is server-side configuration to strictly adhere to the HTTP/1.1 specification regarding transfer encoding and trailer handling.

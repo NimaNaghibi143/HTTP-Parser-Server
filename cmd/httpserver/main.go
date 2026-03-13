@@ -80,6 +80,7 @@ func main() {
 			} else {
 				w.WriteStatusLine(response.StatusOk)
 
+				//  The specification dictates that chunked is the preferred encoding if both are present, and Content-Length should be ignored.
 				h.Delete("Content-length")
 				h.Set("transfer-encoding", "chunked")
 				h.Replace("content-type", "text/plain")
