@@ -90,7 +90,7 @@ func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
 	return err
 }
 
-func (w *Writer) WriteHeader(h headers.Headers) error {
+func (w *Writer) WriteHeaders(h headers.Headers) error {
 	b := []byte{}
 
 	h.ForEach(func(n, v string) {
