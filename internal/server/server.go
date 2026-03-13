@@ -40,6 +40,8 @@ func runConnection(s *Server, conn io.ReadWriteCloser) {
 	if handlerError != nil {
 		response.WriteStatusLine(conn, handlerError.StatusCode)
 		response.WriteHeaders(conn, headers)
+		conn.Write([]byte(handlerError.Message))
+		return
 	}
 
 	body := writer.Bytes()
