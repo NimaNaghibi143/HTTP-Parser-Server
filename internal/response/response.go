@@ -5,7 +5,6 @@ import (
 	"io"
 
 	"http.nima.strive/internal/headers"
-	"http.nima.strive/internal/request"
 )
 
 type Response struct {
@@ -18,14 +17,6 @@ const (
 	StatusBadRequest          StatusCode = 400
 	StatusInternalServerError StatusCode = 500
 )
-
-// this handlererror is used to return the proper error message and status code
-type HandlerError struct {
-	StatusCode StatusCode
-	Message    string
-}
-
-type Handler func(w io.Writer, req *request.Request) *HandlerError
 
 func GetDefaultHeaders(contentLen int) *headers.Headers {
 	h := headers.NewHeaders()

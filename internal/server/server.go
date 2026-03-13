@@ -5,11 +5,20 @@ import (
 	"io"
 	"net"
 
+	"http.nima.strive/internal/request"
 	"http.nima.strive/internal/response"
 )
 
+// this handlererror is used to return the proper error message and status code
+type HandlerError struct {
+	StatusCode response.StatusCode
+	Message    string
+}
+
+type Handler func(w io.Writer, req *request.Request) *HandlerError
 type Server struct {
 	closed bool
+	hander Handler
 }
 
 func runConnection(_s *Server, conn io.ReadWriteCloser) {
@@ -36,14 +45,17 @@ func runServer(s *Server, listener net.Listener) {
 
 }
 
-func Serve(port uint16) (*Server, error) {
+func Serve(port uint16, handler Handler) (*Server, error) {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 
 	if err != nil {
 		return nil, err
 	}
 
-	server := &Server{closed: false}
+	server := &Server{
+		closed: false,
+		hander: handler,
+	}
 	go runServer(server, listener)
 
 	return server, nil
