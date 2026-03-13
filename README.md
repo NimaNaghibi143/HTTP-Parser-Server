@@ -507,3 +507,13 @@ handler = subHandler.find(request.RequestLine.RequestTarget)
 writer = bytes.NewBuffer()
 handler(writer, headers, request)
 ```
+
+yes there are going to be lots of sub handlers but what i think is: 
+when you are playing with this server stuff of course you are going to use the sub-handlers.
+you are also going to want use sth like:
+
+```go
+recover Function func() any
+```
+
+when your server panics you would want your handlers to be caught in the recovery and by catching them in the recovery we are going to make sure the your server does not go down based on a panic but instead reports the panic.
