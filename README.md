@@ -496,7 +496,7 @@ there are two points that we need to refactor:
 
 we need to improve our handler function to be more flexible for custom headers.
 
-## This is not the best way of implementing the server! 
+## This is not the best way of implementing the server
 
 but anyway this is it for now! but we can use sub-handlers for based that we handle each request with a sub-handler based on the request header line and request target*. and write the proper status code for the request.
 
@@ -508,7 +508,7 @@ writer = bytes.NewBuffer()
 handler(writer, headers, request)
 ```
 
-yes there are going to be lots of sub handlers but what i think is: 
+yes there are going to be lots of sub handlers but what i think is:
 when you are playing with this server stuff of course you are going to use the sub-handlers.
 you are also going to want use sth like:
 
@@ -517,3 +517,20 @@ recover Function func() any
 ```
 
 when your server panics you would want your handlers to be caught in the recovery and by catching them in the recovery we are going to make sure the your server does not go down based on a panic but instead reports the panic.
+
+## Chunked encoding
+
+Let's pretend we have a server that recieves a request and that request wants to download a file. but the file you need to download is 10GB big. that's a big file! you can't just simply load that all in memory, be able to calculate the checksum and be able to send that our easily because if you remember we need sth named: **Content-Length** you need to know exactly how many bytes are coming down! but what if you don't even know long this file is ?! what happens of you are recieving this from another server or a different protocol that does not even specify the length you need a way to be able to send down data in such a way that you don't hav to specify the length up front, this is called ***chunked encoding***.
+
+### Chunked Trailer Section
+
+A trailer section allows the sender to include additional fields at the end of a chunked message in order to supply metadata that might be dynamically generted while the content is sent, such as a message integrity check, digital signature, or post-processig status.
+
+A recipient that removes the chunked coding form a message **MAY** selectively retain or discard the recieved trailer fields. A recipient that retains a recieved trailer field **MUST** either store/forward the the trailer field separately from the recieved header fields or merge the recieved trailer field into the header section. A recipient **MUST NOT** merge a recieved trailer field into the header section unless it's corresponding header field definition explicitly permits and instructs how the trailer field value can be safely merged.
+
+in the RFC it's refrered by ***chunked transfer coding***:
+
+The chunked transfer coding wraps content in order to transfer it as a series of chunks, each with it's own size indicator, followed by an **OPTIONAL** of trailer section containing trailer fields. Chunked enables content streams of unknown size to be transferred as a sequence of length-delimited buffers which enables the sender to retain connection persistence and the recipient to know when it has recieved the entire message.
+
+Each http body contains how many bytes are in the body and in the data bytes.
+
