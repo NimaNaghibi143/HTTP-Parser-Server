@@ -486,3 +486,12 @@ HTTP is the primary protocol on the web, and it's on top of TCP (http 1.1 & 2). 
 
 > [!IMPORTANT]
 > **A client SHOULD ignore the reason-phrase content because it is not a reliable channel for inforamtion** (it might be translated for a given locale, overwritten by intermidiaries, or discarded when the message is forwarded via other versions of HTTP). A server **MUST** send the space that separates the status-code from the reason-phrase even when the reason-phrase is absent.
+
+## Refactorting
+
+there are two points that we need to refactor:
+
+1. Error are always handled as plain text responses
+2. Headers are always the same
+
+we need to improve our handler function to be more flexible for custom headers.
