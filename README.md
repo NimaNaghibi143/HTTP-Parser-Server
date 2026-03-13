@@ -534,3 +534,27 @@ The chunked transfer coding wraps content in order to transfer it as a series of
 
 Each http body contains how many bytes are in the body and in the data bytes.
 
+here is the format:
+
+```bash
+HTTP/1.1 200 ok
+Content-Type: text/plain
+Transfer-Encoding: chunked
+
+<n>\r\n
+<data of length n> n>\r\n
+<n>\r\n
+<data of length n> n>\r\n
+... repeat ...
+
+0\r\n
+\r\n
+```
+
+Where `n` is just a hexadecimal number indicating the size of the chunk in bytes and data of length `n` is the actual data for that chunk. That pattern can be repeated as many times as necessary to send the entire message body.
+
+Chunked encoding is most often used for:
+
+* Streaming large amounts of data (like big files)
+* Real-time updates (like a chat-style application)
+* Sending data of unknown size (like a live feed)
