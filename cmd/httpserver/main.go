@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"http.nima.strive/internal/request"
@@ -67,9 +69,41 @@ func main() {
 			body = respond500()
 			status = response.StatusInternalServerError
 
+		} else if strings.HasPrefix(req.RequestLine.RequestTarget, "/httpbin/stream") {
+			target := req.RequestLine.RequestTarget
+
+			res, err := http.Get("https://httpbin.org/" + target[len("/httpbin/"):])
+
+			if err != nil {
+				body = respond500()
+				status = response.StatusInternalServerError
+			} else {
+				w.WriteStatusLine(response.StatusOk)
+
+				h.Delete("Content-length")
+				h.Set("transfer-encoding", "chunked")
+				h.Replace("content-type", "text/plain")
+				w.WriteHeaders(*h)
+				w.WriteBody(body)
+
+				for {
+					data := make([]byte, 32)
+
+					n, err := res.Body.Read(data)
+					if err != nil {
+						break
+					}
+
+					w.WriteBody([]byte(fmt.Sprintf("%x\r\n", n)))
+					w.WriteBody(data[:n])
+					w.WriteBody([]byte("\r\n"))
+				}
+
+				w.WriteBody([]byte("0\r\n\r\n"))
+			}
 		}
 
-		h.Replace("Content-Length", fmt.Sprintf("%d", len(body)))
+		h.Replace("Content-length", fmt.Sprintf("%d", len(body)))
 		h.Replace("Content-type", "text/html")
 
 		w.WriteStatusLine(status)
