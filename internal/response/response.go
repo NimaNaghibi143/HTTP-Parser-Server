@@ -10,10 +10,6 @@ import (
 type Response struct {
 }
 
-type Writer struct {
-	writer io.Writer
-}
-
 type StatusCode int
 
 const (
@@ -21,6 +17,14 @@ const (
 	StatusBadRequest          StatusCode = 400
 	StatusInternalServerError StatusCode = 500
 )
+
+type Writer struct {
+	writer io.Writer
+}
+
+func NewWriter(writer io.Writer) *Writer {
+	return &Writer{writer: writer}
+}
 
 func GetDefaultHeaders(contentLen int) *headers.Headers {
 	h := headers.NewHeaders()
@@ -77,7 +81,7 @@ func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
 	case StatusBadRequest:
 		statusLine = []byte("HTTP/1.1 400 Bad Reqeust\r\n")
 	case StatusInternalServerError:
-		statusLine = []byte("HTTP/1.1 500 Internal Server Errorq\r\n")
+		statusLine = []byte("HTTP/1.1 500 Internal Server Error\r\n")
 	default:
 		return fmt.Errorf("Unrecognized error code!")
 	}
@@ -86,7 +90,7 @@ func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
 	return err
 }
 
-func (w *Writer) WrtieHeader(h headers.Headers) error {
+func (w *Writer) WriteHeader(h headers.Headers) error {
 	b := []byte{}
 
 	h.ForEach(func(n, v string) {
