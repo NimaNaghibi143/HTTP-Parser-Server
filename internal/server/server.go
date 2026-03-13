@@ -37,17 +37,19 @@ func runConnection(s *Server, conn io.ReadWriteCloser) {
 	writer := bytes.NewBuffer([]byte{})
 	handlerError := s.hander(writer, r)
 
+	var body []byte = nil
+	var status response.StatusCode = response.StatusOk
+
 	if handlerError != nil {
-		response.WriteStatusLine(conn, handlerError.StatusCode)
-		response.WriteHeaders(conn, headers)
-		conn.Write([]byte(handlerError.Message))
-		return
+		status = handlerError.StatusCode
+		body = []byte(handlerError.Message)
+	} else {
+		body = writer.Bytes()
 	}
 
-	body := writer.Bytes()
 	headers.Replace("Conetent-Length", fmt.Sprintf("%d", len(body)))
 
-	response.WriteStatusLine(conn, response.StatusOk)
+	response.WriteStatusLine(conn, status)
 	response.WriteHeaders(conn, headers)
 	conn.Write(body)
 }

@@ -16,11 +16,13 @@ const port = 42069
 
 func main() {
 	s, err := server.Serve(port, func(w io.Writer, req *request.Request) *server.HandlerError {
+		// curl -v  http://localhost:42069/yourProblem
 		if req.RequestLine.RequestTarget == "/yourProblem" {
 			return &server.HandlerError{
 				StatusCode: response.StatusBadRequest,
 				Message:    "Ok that's your bad!\n",
 			}
+			// curl -v  http://localhost:42069/myProblem
 		} else if req.RequestLine.RequestTarget == "/myProblem" {
 			return &server.HandlerError{
 				StatusCode: response.StatusInternalServerError,
