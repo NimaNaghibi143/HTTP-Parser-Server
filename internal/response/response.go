@@ -10,6 +10,10 @@ import (
 type Response struct {
 }
 
+type Writer struct {
+	writer io.Writer
+}
+
 type StatusCode int
 
 const (
@@ -28,20 +32,43 @@ func GetDefaultHeaders(contentLen int) *headers.Headers {
 	return h
 }
 
-func WriteHeaders(w io.Writer, h *headers.Headers) error {
-	b := []byte{}
+// legacy header writer
+// func WriteHeaders(w io.Writer, h *headers.Headers) error {
+// 	b := []byte{}
 
-	h.ForEach(func(n, v string) {
-		b = fmt.Appendf(b, "%s: %s\r\n", n, v)
-	})
+// 	h.ForEach(func(n, v string) {
+// 		b = fmt.Appendf(b, "%s: %s\r\n", n, v)
+// 	})
 
-	b = fmt.Append(b, "\r\n")
-	_, err := w.Write(b)
+// 	b = fmt.Append(b, "\r\n")
+// 	_, err := w.Write(b)
 
-	return err
-}
+// 	return err
+// }
 
-func WriteStatusLine(w io.Writer, statusCode StatusCode) error {
+// legacy statusLine writer
+// func WriteStatusLine(w io.Writer, statusCode StatusCode) error {
+// 	statusLine := []byte{}
+
+// 	switch statusCode {
+// 	case StatusOk:
+// 		statusLine = []byte("HTTP/1.1 200 OK\r\n")
+// 	case StatusBadRequest:
+// 		statusLine = []byte("HTTP/1.1 400 Bad Reqeust\r\n")
+// 	case StatusInternalServerError:
+// 		statusLine = []byte("HTTP/1.1 500 Internal Server Errorq\r\n")
+// 	default:
+// 		return fmt.Errorf("Unrecognized error code!")
+// 	}
+
+// 	_, err := w.Write(statusLine)
+// 	return err
+
+// }
+
+// Implementing our own writers and more flexible way of handling headers and status and body.
+
+func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
 	statusLine := []byte{}
 
 	switch statusCode {
@@ -55,7 +82,25 @@ func WriteStatusLine(w io.Writer, statusCode StatusCode) error {
 		return fmt.Errorf("Unrecognized error code!")
 	}
 
-	_, err := w.Write(statusLine)
+	_, err := w.writer.Write(statusLine)
 	return err
+}
 
+func (w *Writer) WrtieHeader(h headers.Headers) error {
+	b := []byte{}
+
+	h.ForEach(func(n, v string) {
+		b = fmt.Appendf(b, "%s: %s\r\n", n, v)
+	})
+
+	b = fmt.Append(b, "\r\n")
+	_, err := w.writer.Write(b)
+
+	return err
+}
+
+func (w *Writer) WriteBody(p []byte) (int, error) {
+	n, err := w.writer.Write(p)
+
+	return n, err
 }
