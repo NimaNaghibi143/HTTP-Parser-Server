@@ -495,3 +495,15 @@ there are two points that we need to refactor:
 2. Headers are always the same
 
 we need to improve our handler function to be more flexible for custom headers.
+
+## This is not the best way of implementing the server! 
+
+but anyway this is it for now! but we can use sub-handlers for based that we handle each request with a sub-handler based on the request header line and request target*. and write the proper status code for the request.
+
+what i mean by the request line and request target:
+
+```go
+handler = subHandler.find(request.RequestLine.RequestTarget)
+writer = bytes.NewBuffer()
+handler(writer, headers, request)
+```
