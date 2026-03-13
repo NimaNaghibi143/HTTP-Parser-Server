@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -14,24 +14,66 @@ import (
 
 const port = 42069
 
+func respond400() []byte {
+	return []byte(`<html>
+    			<head>
+        			<title>400 Bad Request</title>
+    			</head>
+    			<body>
+        			<h1>Bad Request</h1>
+        			<p>Your request kinda is fucked up.</p>
+    			</body>   
+			</html>`)
+}
+
+func respond500() []byte {
+	return []byte(`			<html>
+    			<head>
+        			<title>500 internal server error</title>
+    			</head>
+    			<body>
+        			<h1>Internal server error</h1>
+        			<p>This time i just fucked it up! sorry:).</p>
+    			</body>   
+			</html>`)
+}
+
+func respond200() []byte {
+	return []byte(`			<html>
+    			<head>
+        			<title>200 Bad Request</title>
+    			</head>
+    			<body>
+        			<h1>Finally did it! </h1>
+        			<p>Your request just nailed it ma boy!.</p>
+    			</body>   
+			</html>`)
+}
+
 func main() {
-	s, err := server.Serve(port, func(w io.Writer, req *request.Request) *server.HandlerError {
-		// curl -v  http://localhost:42069/yourProblem
+	s, err := server.Serve(port, func(w *response.Writer, req *request.Request) {
+
+		h := response.GetDefaultHeaders(0)
+		body := respond200()
+		status := response.StatusOk
+
 		if req.RequestLine.RequestTarget == "/yourProblem" {
-			return &server.HandlerError{
-				StatusCode: response.StatusBadRequest,
-				Message:    "Ok that's your bad!\n",
-			}
-			// curl -v  http://localhost:42069/myProblem
+
+			body = respond400()
+			status = response.StatusBadRequest
+
 		} else if req.RequestLine.RequestTarget == "/myProblem" {
-			return &server.HandlerError{
-				StatusCode: response.StatusInternalServerError,
-				Message:    "Ok, i get it my bad\n",
-			}
-		} else {
-			w.Write([]byte("ALl good!\n"))
+
+			body = respond500()
+			status = response.StatusInternalServerError
+
 		}
-		return nil
+
+		h.Replace("Content-Length", fmt.Sprintf("%d", len(body)))
+
+		w.WriteStatusLine(status)
+		w.WriteHeaders(*h)
+		w.WriteBody(body)
 	})
 
 	if err != nil {
