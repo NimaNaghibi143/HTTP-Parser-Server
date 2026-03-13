@@ -55,6 +55,11 @@ func parseHeader(fieldLine []byte) (string, string, error) {
 	return string(name), string(value), nil
 }
 
+func (h *Headers) Delete(name string) {
+	name = strings.ToLower(name)
+	delete(h.headers, name)
+}
+
 // getter
 func (h *Headers) Get(name string) (string, bool) {
 	str, ok := h.headers[strings.ToLower(name)]
