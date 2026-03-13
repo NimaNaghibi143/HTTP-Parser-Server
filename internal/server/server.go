@@ -4,16 +4,21 @@ import (
 	"fmt"
 	"io"
 	"net"
+
+	"http.nima.strive/internal/response"
 )
 
 type Server struct {
 	closed bool
 }
 
-func runConnection(s *Server, conn io.ReadWriteCloser) {
-	out := []byte("HTTP/1.1 200 ok\r\nContent-Type: text/plain\r\n\r\nHello world!")
-	conn.Write(out)
-	conn.Close()
+func runConnection(_s *Server, conn io.ReadWriteCloser) {
+	defer conn.Close()
+
+	headers := response.GetDefaultHeaders(0)
+
+	response.WriteStatusLine(conn, response.StatusOk)
+	response.WriteHeader(conn, headers)
 }
 
 func runServer(s *Server, listener net.Listener) {
