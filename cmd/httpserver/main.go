@@ -84,7 +84,6 @@ func main() {
 				h.Set("transfer-encoding", "chunked")
 				h.Replace("content-type", "text/plain")
 				w.WriteHeaders(*h)
-				w.WriteBody(body)
 
 				for {
 					data := make([]byte, 32)
@@ -100,6 +99,7 @@ func main() {
 				}
 
 				w.WriteBody([]byte("0\r\n\r\n"))
+				return
 			}
 		}
 
