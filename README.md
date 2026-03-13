@@ -568,5 +568,5 @@ Chunked encoding is most often used for:
 > How to disable http2
 
 ```bash
-curl --http1.1 -v https://httpbin.org/stream/5
+curl --http1.1 -vvv https://httpbin.org/stream/5
 ```
