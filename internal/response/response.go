@@ -28,7 +28,7 @@ func GetDefaultHeaders(contentLen int) *headers.Headers {
 	return h
 }
 
-func WriteHeader(w io.Writer, h *headers.Headers) error {
+func WriteHeaders(w io.Writer, h *headers.Headers) error {
 	b := []byte{}
 
 	h.ForEach(func(n, v string) {
