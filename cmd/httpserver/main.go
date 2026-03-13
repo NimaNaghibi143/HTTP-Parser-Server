@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,12 +10,23 @@ import (
 	"strings"
 	"syscall"
 
+	"http.nima.strive/internal/headers"
 	"http.nima.strive/internal/request"
 	"http.nima.strive/internal/response"
 	"http.nima.strive/internal/server"
 )
 
 const port = 42069
+
+func toStr(bytes []byte) string {
+	out := ""
+
+	for _, b := range bytes {
+		out += fmt.Sprintf("%02x", b)
+	}
+
+	return out
+}
 
 func respond400() []byte {
 	return []byte(`<html>
@@ -69,7 +81,8 @@ func main() {
 			body = respond500()
 			status = response.StatusInternalServerError
 
-		} else if strings.HasPrefix(req.RequestLine.RequestTarget, "/httpbin/stream") {
+			// /httpbin/stream for the previous phase of the trailers
+		} else if strings.HasPrefix(req.RequestLine.RequestTarget, "/httpbin/") {
 			target := req.RequestLine.RequestTarget
 
 			res, err := http.Get("https://httpbin.org/" + target[len("/httpbin/"):])
@@ -84,7 +97,11 @@ func main() {
 				h.Delete("Content-length")
 				h.Set("transfer-encoding", "chunked")
 				h.Replace("content-type", "text/plain")
+				h.Set("Trailer", "X-Content-SHA256")
+				h.Set("Trailer", "X-Content-Length")
 				w.WriteHeaders(*h)
+
+				fullBody := []byte{}
 
 				for {
 					data := make([]byte, 32)
@@ -94,12 +111,22 @@ func main() {
 						break
 					}
 
+					fullBody = append(fullBody, data[:n]...)
+
 					w.WriteBody([]byte(fmt.Sprintf("%x\r\n", n)))
 					w.WriteBody(data[:n])
 					w.WriteBody([]byte("\r\n"))
 				}
 
-				w.WriteBody([]byte("0\r\n\r\n"))
+				// agter running the server to test the trailes: curl -X GET http://localhost:42069/httpbin/html
+				// remeber to check the prefix for the headers! (/httpbin/stream or /httpbin/html.)
+				w.WriteBody([]byte("0\r\n"))
+				trailers := headers.NewHeaders()
+				out := sha256.Sum256(fullBody)
+				trailers.Set("X-Content-SHA256", toStr(out[:]))
+				trailers.Set("X-Content-Length", fmt.Sprintf("%d", len(fullBody)))
+				w.WriteHeaders(*trailers)
+
 				return
 			}
 		}
@@ -110,6 +137,7 @@ func main() {
 		w.WriteStatusLine(status)
 		w.WriteHeaders(*h)
 		w.WriteBody(body)
+
 	})
 
 	if err != nil {
