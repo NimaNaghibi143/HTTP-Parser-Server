@@ -558,3 +558,15 @@ Chunked encoding is most often used for:
 * Streaming large amounts of data (like big files)
 * Real-time updates (like a chat-style application)
 * Sending data of unknown size (like a live feed)
+
+### Testing
+
+> [!NOTE]
+> `https://httpbin.org/stream/x` streams x JSON responses to our server, making it a great way for us to test our chunked response implementation.
+
+> [!NOTE]
+> How to disable http2
+
+```bash
+curl --http1.1 -v https://httpbin.org/stream/5
+```
